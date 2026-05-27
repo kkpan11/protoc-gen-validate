@@ -7,6 +7,9 @@ const msgTpl = `
 {{- else -}}
 	{{ cmt "Validate checks the field values on " (msgTyp .) " with the rules defined in the proto definition for this message. If any rules are violated, the first error encountered is returned, or nil if there are no violations." }}
 {{- end -}}
+{{ if markDeprecated }}//
+// Deprecated: Use github.com/bufbuild/protovalidate instead.
+{{ end -}}
 func (m {{ (msgTyp .).Pointer }}) Validate() error {
 	return m.validate(false)
 }
@@ -16,6 +19,9 @@ func (m {{ (msgTyp .).Pointer }}) Validate() error {
 {{- else -}}
 	{{ cmt "ValidateAll checks the field values on " (msgTyp .) " with the rules defined in the proto definition for this message. If any rules are violated, the result is a list of violation errors wrapped in " (multierrname .) ", or nil if none found." }}
 {{- end -}}
+{{ if markDeprecated }}//
+// Deprecated: Use github.com/bufbuild/protovalidate instead.
+{{ end -}}
 func (m {{ (msgTyp .).Pointer }}) ValidateAll() error {
 	return m.validate(true)
 }
@@ -95,7 +101,7 @@ type {{ multierrname . }} []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m {{ multierrname . }}) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -210,6 +216,20 @@ var _ interface{
 	{{ if has .Rules.Items.GetInt64 "NotIn" }} {{ if .Rules.Items.GetInt64.NotIn }}
 		var {{ lookup .Field "NotInLookup" }} = map[int64]struct{}{
 			{{- range .Rules.Items.GetInt64.NotIn }}
+				{{ inKey $f . }}: {},
+			{{- end }}
+		}
+	{{ end }}{{ end }}
+	{{ if has .Rules.Items.GetInt32 "In" }} {{ if .Rules.Items.GetInt32.In }}
+		var {{ lookup .Field "InLookup" }} = map[int32]struct{}{
+			{{- range .Rules.Items.GetInt32.In }}
+				{{ inKey $f . }}: {},
+			{{- end }}
+		}
+	{{ end }}{{ end }}
+	{{ if has .Rules.Items.GetInt32 "NotIn" }} {{ if .Rules.Items.GetInt32.NotIn }}
+		var {{ lookup .Field "NotInLookup" }} = map[int32]struct{}{
+			{{- range .Rules.Items.GetInt32.NotIn }}
 				{{ inKey $f . }}: {},
 			{{- end }}
 		}
